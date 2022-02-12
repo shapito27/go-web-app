@@ -5,15 +5,32 @@ import (
 	"net/http"
 	"path/filepath"
 	"text/template"
+
+	"github.com/shapito27/go-web-app/pkg/config"
 )
 
 var functions = template.FuncMap{}
 
+var appConfig *config.AppConfig
+
+// Set config
+func SetAppConfig(ac *config.AppConfig) {
+	appConfig = ac
+}
+
 // To render templates
 func RenderTemplate(w http.ResponseWriter, tmpl string) {
-	templates, err := getTemplatesList()
-	if err != nil {
-		fmt.Println("Error getting templates cache", err)
+	var templates map[string]*template.Template
+
+	if appConfig.UseCache {
+		// getting templates list from config
+		templates = appConfig.TemplatesCache
+	} else {
+		var err error
+		templates, err = GetTemplatesCache()
+		if err != nil {
+			fmt.Println("Error getting template from cache", err)
+		}
 	}
 
 	t, ok := templates[tmpl+".page.tmpl"]
@@ -21,7 +38,7 @@ func RenderTemplate(w http.ResponseWriter, tmpl string) {
 		fmt.Println("Error getting template from cache")
 	}
 
-	err = t.Execute(w, nil)
+	err := t.Execute(w, nil)
 
 	if err != nil {
 		fmt.Println("Error writing template to browser", err)
@@ -30,7 +47,7 @@ func RenderTemplate(w http.ResponseWriter, tmpl string) {
 }
 
 //collect all templates then merge them with layout
-func getTemplatesList() (map[string]*template.Template, error) {
+func GetTemplatesCache() (map[string]*template.Template, error) {
 	myCache := map[string]*template.Template{}
 
 	pages, err := filepath.Glob("./templates/*.page.tmpl")
