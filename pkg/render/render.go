@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/shapito27/go-web-app/pkg/config"
+	"github.com/shapito27/go-web-app/pkg/models"
 )
 
 var functions = template.FuncMap{}
@@ -18,8 +19,13 @@ func SetAppConfig(ac *config.AppConfig) {
 	appConfig = ac
 }
 
+// add default data to all template data
+func addDefaultData(templateData *models.TemplateData) *models.TemplateData {
+	return templateData
+}
+
 // To render templates
-func RenderTemplate(w http.ResponseWriter, tmpl string) {
+func RenderTemplate(w http.ResponseWriter, tmpl string, data *models.TemplateData) {
 	var templates map[string]*template.Template
 
 	if appConfig.UseCache {
@@ -38,7 +44,9 @@ func RenderTemplate(w http.ResponseWriter, tmpl string) {
 		fmt.Println("Error getting template from cache")
 	}
 
-	err := t.Execute(w, nil)
+	data = addDefaultData(data)
+
+	err := t.Execute(w, data)
 
 	if err != nil {
 		fmt.Println("Error writing template to browser", err)

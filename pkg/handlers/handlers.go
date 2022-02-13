@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/shapito27/go-web-app/pkg/config"
+	"github.com/shapito27/go-web-app/pkg/models"
 	"github.com/shapito27/go-web-app/pkg/render"
 )
 
@@ -27,10 +28,15 @@ func NewHandlers(r *Repository) {
 
 // Home page handler
 func (rep *Repository) Home(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, "home")
+
+	render.RenderTemplate(w, "home", &models.TemplateData{})
 }
 
 // About page handler
 func (rep *Repository) About(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, "about")
+
+	stringMap := make(map[string]string)
+	stringMap["test"] = "Helo there"
+
+	render.RenderTemplate(w, "about", &models.TemplateData{StringMap: stringMap})
 }
