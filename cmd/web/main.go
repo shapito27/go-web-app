@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/shapito27/go-web-app/pkg/config"
@@ -32,11 +33,13 @@ func main() {
 	// pass config to render package
 	render.SetAppConfig(&config)
 
-	// routes
-	http.HandleFunc("/", handlers.Repo.Home)
-	http.HandleFunc("/about", handlers.Repo.About)
+	srv := &http.Server{
+		Addr:    portNumber,
+		Handler: routes(&config),
+	}
 
 	fmt.Println(fmt.Sprintf("Starting application on port %s", portNumber))
 
-	http.ListenAndServe(portNumber, nil)
+	err = srv.ListenAndServe()
+	log.Fatal(err)
 }
