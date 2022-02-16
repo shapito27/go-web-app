@@ -11,6 +11,13 @@ About
             <h1>This is about page</h1>
             <p><a href="/">Go to home page</a></p>
             <p>Data from template: {{index .StringMap "test"}}</p>
+            <p>
+                {{ if ne (index .StringMap "remote_ip") "" }}
+                Your remore ip address is {{ index .StringMap "remote_ip" }}
+                {{ else }}
+                I don't know your ip address, visit home page.
+                {{ end }}
+            </p>
         </div>
     </div>
 </div>

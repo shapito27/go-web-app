@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/shapito27/go-web-app/pkg/config"
 	"github.com/shapito27/go-web-app/pkg/handlers"
 	"github.com/shapito27/go-web-app/pkg/render"
@@ -13,8 +15,21 @@ import (
 //app listen this port
 const portNumber = ":8080"
 
+var app config.AppConfig
+var session *scs.SessionManager
+
 func main() {
-	var config config.AppConfig
+	// Setup environment
+	app.IsProduction = false
+
+	// Setup session
+	session = scs.New()
+	session.Lifetime = 24 * time.Hour
+	session.Cookie.Persist = true
+	session.Cookie.SameSite = http.SameSiteLaxMode
+	session.Cookie.Secure = app.IsProduction
+
+	app.Session = session
 
 	// getting templates list
 	templates, err := render.GetTemplatesCache()
@@ -23,19 +38,19 @@ func main() {
 	}
 
 	// save templates to config
-	config.TemplatesCache = templates
+	app.TemplatesCache = templates
 	// false - development mode, true - production
-	config.UseCache = true
+	app.UseCache = true
 
-	repo := handlers.NewRepo(&config)
+	repo := handlers.NewRepo(&app)
 	handlers.NewHandlers(repo)
 
 	// pass config to render package
-	render.SetAppConfig(&config)
+	render.SetAppConfig(&app)
 
 	srv := &http.Server{
 		Addr:    portNumber,
-		Handler: routes(&config),
+		Handler: routes(&app),
 	}
 
 	fmt.Println(fmt.Sprintf("Starting application on port %s", portNumber))

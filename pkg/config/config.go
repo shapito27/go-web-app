@@ -1,8 +1,14 @@
 package config
 
-import "text/template"
+import (
+	"text/template"
+
+	"github.com/alexedwards/scs/v2"
+)
 
 type AppConfig struct {
-	UseCache      bool
+	UseCache       bool
 	TemplatesCache map[string]*template.Template
+	IsProduction   bool
+	Session        *scs.SessionManager
 }
