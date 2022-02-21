@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/justinas/nosurf"
 	"github.com/shapito27/go-web-app/pkg/config"
 	"github.com/shapito27/go-web-app/pkg/models"
 )
@@ -20,12 +21,14 @@ func SetAppConfig(ac *config.AppConfig) {
 }
 
 // add default data to all template data
-func addDefaultData(templateData *models.TemplateData) *models.TemplateData {
+func addDefaultData(templateData *models.TemplateData, r *http.Request) *models.TemplateData {
+	templateData.CSRFToken = nosurf.Token(r)
+
 	return templateData
 }
 
 // To render templates
-func RenderTemplate(w http.ResponseWriter, tmpl string, data *models.TemplateData) {
+func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, data *models.TemplateData) {
 	var templates map[string]*template.Template
 
 	if appConfig.UseCache {
@@ -44,7 +47,7 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, data *models.TemplateDat
 		fmt.Println("Error getting template from cache")
 	}
 
-	data = addDefaultData(data)
+	data = addDefaultData(data, r)
 
 	err := t.Execute(w, data)
 
