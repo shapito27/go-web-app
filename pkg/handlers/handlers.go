@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/shapito27/go-web-app/pkg/config"
@@ -66,6 +68,27 @@ func (rep *Repository) PostAvailablility(w http.ResponseWriter, r *http.Request)
 	end := r.Form.Get("end")
 
 	w.Write([]byte(fmt.Sprintf("dates is %s - %s", start, end)))
+}
+
+type jsonResponse struct {
+	OK      bool   `json:"ok"`
+	Message string `json:"message"`
+}
+
+func (rep *Repository) PostAvailablilityJSON(w http.ResponseWriter, r *http.Request) {
+	resp := jsonResponse{
+		OK:      true,
+		Message: "Available",
+	}
+
+	out, err := json.MarshalIndent(resp, "", "    ")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.Write([]byte(out))
 }
 
 func (rep *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
