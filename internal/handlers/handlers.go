@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/shapito27/go-web-app/internal/config"
+	"github.com/shapito27/go-web-app/internal/forms"
 	"github.com/shapito27/go-web-app/internal/models"
 	"github.com/shapito27/go-web-app/internal/render"
 )
@@ -92,7 +93,41 @@ func (rep *Repository) PostAvailablilityJSON(w http.ResponseWriter, r *http.Requ
 }
 
 func (rep *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "make-reservation", &models.TemplateData{})
+	render.RenderTemplate(w, r, "make-reservation", &models.TemplateData{
+		Form: forms.New(nil),
+	})
+}
+
+func (rep *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	reservation := models.Reservation{
+		FirstName: r.Form.Get("first_name"),
+		LastName:  r.Form.Get("last_name"),
+		Email:     r.Form.Get("email"),
+		Phone:     r.Form.Get("phone"),
+	}
+
+	form := forms.New(r.PostForm)
+
+	form.Has("first_name", r)
+
+	if !form.Valid() {
+		data := make(map[string]interface{})
+
+		data["reservation"] = reservation
+
+		render.RenderTemplate(w, r, "make-reservation", &models.TemplateData{
+			Form: form,
+			Data: data,
+		})
+
+		return
+	}
 }
 
 func (rep *Repository) Contact(w http.ResponseWriter, r *http.Request) {

@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/shapito27/go-web-app/pkg/config"
-	"github.com/shapito27/go-web-app/pkg/handlers"
+	"github.com/shapito27/go-web-app/internal/config"
+	"github.com/shapito27/go-web-app/internal/handlers"
 )
 
 func routes(app *config.AppConfig) http.Handler {
@@ -29,6 +29,8 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Post("/search-availability-json", handlers.Repo.PostAvailablilityJSON)
 
 	mux.Get("/make-reservation", handlers.Repo.Reservation)
+	mux.Post("/make-reservation", handlers.Repo.PostReservation)
+
 	mux.Get("/contact", handlers.Repo.Contact)
 
 	fileServer := http.FileServer(http.Dir("./static/"))
