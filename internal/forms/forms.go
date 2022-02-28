@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/asaskevich/govalidator"
 )
 
 // Form stores form values and errors
@@ -53,5 +55,12 @@ func (f *Form) MinLength(field string, length int, r *http.Request) {
 	value := r.Form.Get(field)
 	if len(value) < length {
 		f.Errors.Add(field, fmt.Sprintf("%s can't be less than %d symbols", field, length))
+	}
+}
+
+// IsEmail checks email valid
+func (f *Form) IsEmail(field string) {
+	if !govalidator.IsEmail(f.Values.Get(field)) {
+		f.Errors.Add(field, fmt.Sprintf("%s is not valid", field))
 	}
 }
