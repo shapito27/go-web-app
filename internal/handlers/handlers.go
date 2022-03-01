@@ -92,6 +92,7 @@ func (rep *Repository) PostAvailablilityJSON(w http.ResponseWriter, r *http.Requ
 	w.Write([]byte(out))
 }
 
+// Reservation handles requests to reservation form
 func (rep *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 	var emptyReservation models.Reservation
 
@@ -104,6 +105,7 @@ func (rep *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// PostReservation handles reservation post request
 func (rep *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -136,8 +138,29 @@ func (rep *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	rep.AppConfig.Session.Put(r.Context(), "reservation", reservation)
+
+	http.Redirect(w, r, "/reservation-summary", http.StatusSeeOther)
 }
 
+// Contact handles requests to contact page
 func (rep *Repository) Contact(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, r, "contact", &models.TemplateData{})
+}
+
+// ReservationSummary shows information from form
+func (rep *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) {
+	data := make(map[string]interface{})
+
+	reservation, ok := rep.AppConfig.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		log.Println("Can not pull reservation from the session")
+		return
+	}
+	data["reservation"] = reservation
+
+	render.RenderTemplate(w, r, "reservation-summary", &models.TemplateData{
+		Data: data,
+	})
 }
