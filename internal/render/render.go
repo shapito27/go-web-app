@@ -22,6 +22,9 @@ func SetAppConfig(ac *config.AppConfig) {
 
 // add default data to all template data
 func addDefaultData(templateData *models.TemplateData, r *http.Request) *models.TemplateData {
+	templateData.Flash = appConfig.Session.PopString(r.Context(), "flash")
+	templateData.Error = appConfig.Session.PopString(r.Context(), "error")
+	templateData.Warning = appConfig.Session.PopString(r.Context(), "warning")
 	templateData.CSRFToken = nosurf.Token(r)
 
 	return templateData

@@ -155,9 +155,16 @@ func (rep *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request
 
 	reservation, ok := rep.AppConfig.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
-		log.Println("Can not pull reservation from the session")
+		errorMessage := "Can not pull reservation from the session"
+		log.Println(errorMessage)
+		rep.AppConfig.Session.Put(r.Context(), "error", errorMessage)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+
 		return
 	}
+
+	rep.AppConfig.Session.Remove(r.Context(), "reservation")
+
 	data["reservation"] = reservation
 
 	render.RenderTemplate(w, r, "reservation-summary", &models.TemplateData{
