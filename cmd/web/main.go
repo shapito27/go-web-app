@@ -21,6 +21,23 @@ var app config.AppConfig
 var session *scs.SessionManager
 
 func main() {
+	err := run()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	srv := &http.Server{
+		Addr:    portNumber,
+		Handler: routes(&app),
+	}
+
+	fmt.Println(fmt.Sprintf("Starting application on port %s", portNumber))
+
+	err = srv.ListenAndServe()
+	log.Fatal(err)
+}
+
+func run() error {
 	//what I'm going to store in the session
 	gob.Register(models.Reservation{})
 
@@ -40,6 +57,7 @@ func main() {
 	templates, err := render.GetTemplatesCache()
 	if err != nil {
 		fmt.Println("Error getting templates cache", err)
+		return err
 	}
 
 	// save templates to config
@@ -53,13 +71,5 @@ func main() {
 	// pass config to render package
 	render.SetAppConfig(&app)
 
-	srv := &http.Server{
-		Addr:    portNumber,
-		Handler: routes(&app),
-	}
-
-	fmt.Println(fmt.Sprintf("Starting application on port %s", portNumber))
-
-	err = srv.ListenAndServe()
-	log.Fatal(err)
+	return nil
 }
