@@ -1,6 +1,7 @@
 package render
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -33,7 +34,7 @@ func addDefaultData(templateData *models.TemplateData, r *http.Request) *models.
 }
 
 // To render templates
-func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, data *models.TemplateData) {
+func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, data *models.TemplateData) error {
 	var templates map[string]*template.Template
 
 	if appConfig.UseCache {
@@ -44,12 +45,14 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, data *m
 		templates, err = GetTemplatesCache()
 		if err != nil {
 			fmt.Println("Error getting template from cache", err)
+			return err
 		}
 	}
 
 	t, ok := templates[tmpl+".page.tmpl"]
 	if !ok {
 		fmt.Println("Error getting template from cache")
+		return errors.New("Error getting template from cache")
 	}
 
 	data = addDefaultData(data, r)
@@ -58,8 +61,10 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, data *m
 
 	if err != nil {
 		fmt.Println("Error writing template to browser", err)
+		return err
 	}
 
+	return nil
 }
 
 //collect all templates then merge them with layout
