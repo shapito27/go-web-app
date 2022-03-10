@@ -63,7 +63,7 @@ func run() error {
 	// save templates to config
 	app.TemplatesCache = templates
 	// false - development mode, true - production
-	app.UseCache = true
+	app.UseCache = false
 
 	repo := handlers.NewRepo(&app)
 	handlers.NewHandlers(repo)

@@ -44,15 +44,15 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, data *m
 		var err error
 		templates, err = GetTemplatesCache()
 		if err != nil {
-			fmt.Println("Error getting template from cache", err)
+			fmt.Println("Error getting template", err)
 			return err
 		}
 	}
 
 	t, ok := templates[tmpl+".page.tmpl"]
 	if !ok {
-		fmt.Println("Error getting template from cache")
-		return errors.New("Error getting template from cache")
+		fmt.Println("Template doesn't exist")
+		return errors.New("Template doesn't exist")
 	}
 
 	data = addDefaultData(data, r)
