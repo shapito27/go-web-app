@@ -2,6 +2,7 @@ package render
 
 import (
 	"encoding/gob"
+	"log"
 	"net/http"
 	"os"
 	"testing"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/shapito27/go-web-app/internal/config"
+	"github.com/shapito27/go-web-app/internal/helpers"
 	"github.com/shapito27/go-web-app/internal/models"
 )
 
@@ -21,6 +23,15 @@ func TestMain(m *testing.M) {
 
 	// Setup environment
 	app.IsProduction = false
+
+	// Setup Loggers
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	app.InfoLog = infoLog
+
+	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	app.ErrorLog = errorLog
+
+	helpers.NewHelpers(&app)
 
 	// Setup session
 	session = scs.New()

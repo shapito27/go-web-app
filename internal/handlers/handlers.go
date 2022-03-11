@@ -3,11 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/shapito27/go-web-app/internal/config"
 	"github.com/shapito27/go-web-app/internal/forms"
+	"github.com/shapito27/go-web-app/internal/helpers"
 	"github.com/shapito27/go-web-app/internal/models"
 	"github.com/shapito27/go-web-app/internal/render"
 )
@@ -32,24 +32,13 @@ func NewHandlers(r *Repository) {
 
 // Home page handler
 func (rep *Repository) Home(w http.ResponseWriter, r *http.Request) {
-	remoteIp := r.RemoteAddr
-	rep.AppConfig.Session.Put(r.Context(), "remote_ip", remoteIp)
-
 	render.RenderTemplate(w, r, "home", &models.TemplateData{})
 }
 
 // About page handler
 func (rep *Repository) About(w http.ResponseWriter, r *http.Request) {
 
-	stringMap := make(map[string]string)
-	stringMap["test"] = "Helo there"
-
-	remoteIp := rep.AppConfig.Session.GetString(r.Context(), "remote_ip")
-	stringMap["remote_ip"] = remoteIp
-
-	render.RenderTemplate(w, r, "about", &models.TemplateData{
-		StringMap: stringMap,
-	})
+	render.RenderTemplate(w, r, "about", &models.TemplateData{})
 }
 
 func (rep *Repository) Generals(w http.ResponseWriter, r *http.Request) {
@@ -85,7 +74,8 @@ func (rep *Repository) PostAvailablilityJSON(w http.ResponseWriter, r *http.Requ
 	out, err := json.MarshalIndent(resp, "", "    ")
 
 	if err != nil {
-		log.Println(err)
+		helpers.ServerError(w, err)
+		return
 	}
 
 	w.Header().Set("Content-type", "application/json")
@@ -109,7 +99,7 @@ func (rep *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 func (rep *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		log.Println(err)
+		helpers.ServerError(w, err)
 		return
 	}
 
@@ -156,8 +146,10 @@ func (rep *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request
 	reservation, ok := rep.AppConfig.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
 		errorMessage := "Can not pull reservation from the session"
-		log.Println(errorMessage)
+
+		rep.AppConfig.ErrorLog.Println(errorMessage)
 		rep.AppConfig.Session.Put(r.Context(), "error", errorMessage)
+
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 
 		return

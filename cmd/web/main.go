@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/shapito27/go-web-app/internal/config"
 	"github.com/shapito27/go-web-app/internal/handlers"
+	"github.com/shapito27/go-web-app/internal/helpers"
 	"github.com/shapito27/go-web-app/internal/models"
 	"github.com/shapito27/go-web-app/internal/render"
 )
@@ -19,6 +21,9 @@ const portNumber = ":8080"
 
 var app config.AppConfig
 var session *scs.SessionManager
+
+var infoLog *log.Logger
+var errorLog *log.Logger
 
 func main() {
 	err := run()
@@ -43,6 +48,15 @@ func run() error {
 
 	// Setup environment
 	app.IsProduction = false
+
+	// Setup Loggers
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	app.InfoLog = infoLog
+
+	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	app.ErrorLog = errorLog
+
+	helpers.NewHelpers(&app)
 
 	// Setup session
 	session = scs.New()

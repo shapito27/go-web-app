@@ -3,7 +3,9 @@ package handlers
 import (
 	"encoding/gob"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"text/template"
 	"time"
@@ -13,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/justinas/nosurf"
 	"github.com/shapito27/go-web-app/internal/config"
+	"github.com/shapito27/go-web-app/internal/helpers"
 	"github.com/shapito27/go-web-app/internal/models"
 	"github.com/shapito27/go-web-app/internal/render"
 )
@@ -30,6 +33,15 @@ func getRoutes() http.Handler {
 
 	// Setup environment
 	app.IsProduction = false
+
+	// Setup Loggers
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	app.InfoLog = infoLog
+
+	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	app.ErrorLog = errorLog
+
+	helpers.NewHelpers(&app)
 
 	// Setup session
 	session = scs.New()
