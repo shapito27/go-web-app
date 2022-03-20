@@ -6,22 +6,27 @@ import (
 	"net/http"
 
 	"github.com/shapito27/go-web-app/internal/config"
+	"github.com/shapito27/go-web-app/internal/driver"
 	"github.com/shapito27/go-web-app/internal/forms"
 	"github.com/shapito27/go-web-app/internal/helpers"
 	"github.com/shapito27/go-web-app/internal/models"
 	"github.com/shapito27/go-web-app/internal/render"
+	"github.com/shapito27/go-web-app/internal/repository"
+	"github.com/shapito27/go-web-app/internal/repository/dbrepo"
 )
 
 var Repo *Repository
 
 type Repository struct {
 	AppConfig *config.AppConfig
+	DB        repository.DatabaseRepo
 }
 
 // Create new Repository
-func NewRepo(a *config.AppConfig) *Repository {
+func NewRepo(a *config.AppConfig, db *driver.DB) *Repository {
 	return &Repository{
 		AppConfig: a,
+		DB:        dbrepo.NewPostgresDBRepo(db.SQL, a),
 	}
 }
 

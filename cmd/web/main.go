@@ -10,6 +10,7 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/shapito27/go-web-app/internal/config"
+	"github.com/shapito27/go-web-app/internal/driver"
 	"github.com/shapito27/go-web-app/internal/handlers"
 	"github.com/shapito27/go-web-app/internal/helpers"
 	"github.com/shapito27/go-web-app/internal/models"
@@ -26,10 +27,11 @@ var infoLog *log.Logger
 var errorLog *log.Logger
 
 func main() {
-	err := run()
+	db, err := run()
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.SQL.Close()
 
 	srv := &http.Server{
 		Addr:    portNumber,
@@ -42,7 +44,7 @@ func main() {
 	log.Fatal(err)
 }
 
-func run() error {
+func run() (*driver.DB, error) {
 	//what I'm going to store in the session
 	gob.Register(models.Reservation{})
 
@@ -71,7 +73,7 @@ func run() error {
 	templates, err := render.GetTemplatesCache()
 	if err != nil {
 		fmt.Println("Error getting templates cache", err)
-		return err
+		return nil, err
 	}
 
 	// save templates to config
@@ -79,11 +81,21 @@ func run() error {
 	// false - development mode, true - production
 	app.UseCache = false
 
-	repo := handlers.NewRepo(&app)
+	// connect to database
+	log.Println("Connecting database...")
+	dsn := "host=localhost port=5432 dbname=bookings user=postgres password=postgres"
+	db, err := driver.ConnectSQL(dsn)
+	if err != nil {
+		fmt.Println("Error when connect sql", err)
+		return nil, err
+	}
+	log.Println("Connected to database!")
+
+	repo := handlers.NewRepo(&app, db)
 	handlers.NewHandlers(repo)
 
 	// pass config to render package
 	render.SetAppConfig(&app)
 
-	return nil
+	return db, nil
 }
