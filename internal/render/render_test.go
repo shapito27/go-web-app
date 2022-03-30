@@ -61,12 +61,12 @@ func TestRenderTemplate(t *testing.T) {
 
 	templateData := &models.TemplateData{}
 
-	err = RenderTemplate(w, r, "home", templateData)
+	err = Template(w, r, "home", templateData)
 	if err != nil {
 		t.Error("Can not render existed template", err)
 	}
 
-	err = RenderTemplate(w, r, "6666", templateData)
+	err = Template(w, r, "6666", templateData)
 	if err == nil {
 		t.Error("Got not existed template")
 	}
@@ -74,7 +74,7 @@ func TestRenderTemplate(t *testing.T) {
 
 func TestSetAppConfig(t *testing.T) {
 
-	SetAppConfig(&config.AppConfig{
+	NewRenderer(&config.AppConfig{
 		UseCache:     true,
 		IsProduction: true,
 	})

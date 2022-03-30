@@ -47,6 +47,9 @@ func main() {
 func run() (*driver.DB, error) {
 	//what I'm going to store in the session
 	gob.Register(models.Reservation{})
+	gob.Register(models.User{})
+	gob.Register(models.Room{})
+	gob.Register(models.Restriction{})
 
 	// Setup environment
 	app.IsProduction = false
@@ -95,7 +98,7 @@ func run() (*driver.DB, error) {
 	handlers.NewHandlers(repo)
 
 	// pass config to render package
-	render.SetAppConfig(&app)
+	render.NewRenderer(&app)
 
 	return db, nil
 }

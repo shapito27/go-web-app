@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/justinas/nosurf"
 	"github.com/shapito27/go-web-app/internal/config"
+	"github.com/shapito27/go-web-app/internal/driver"
 	"github.com/shapito27/go-web-app/internal/helpers"
 	"github.com/shapito27/go-web-app/internal/models"
 	"github.com/shapito27/go-web-app/internal/render"
@@ -63,11 +64,19 @@ func getRoutes() http.Handler {
 	// false - development mode, true - production
 	app.UseCache = true
 
-	repo := NewRepo(&app)
+	// connect to database
+	dsn := "host=localhost port=5432 dbname=bookings user=postgres password=postgres"
+	db, err := driver.ConnectSQL(dsn)
+	if err != nil {
+		fmt.Println("Error when connect sql", err)
+	}
+	log.Println("Connected to database!")
+
+	repo := NewRepo(&app, db)
 	NewHandlers(repo)
 
 	// pass config to render package
-	render.SetAppConfig(&app)
+	render.NewRenderer(&app)
 
 	mux := chi.NewRouter()
 
