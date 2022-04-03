@@ -12,3 +12,9 @@ website available on http://localhost:8080
 #### Check tests coverage
 From folder /cmd/web/
 > go test -coverprofile=coverage.out && go tool cover -html=coverage.out
+
+
+#### Run migrations
+> soda migrate
+
+
