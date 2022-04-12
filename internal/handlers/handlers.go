@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/shapito27/go-web-app/internal/config"
 	"github.com/shapito27/go-web-app/internal/driver"
 	"github.com/shapito27/go-web-app/internal/forms"
@@ -64,7 +64,45 @@ func (rep *Repository) PostAvailablility(w http.ResponseWriter, r *http.Request)
 	start := r.Form.Get("start")
 	end := r.Form.Get("end")
 
-	w.Write([]byte(fmt.Sprintf("dates is %s - %s", start, end)))
+	layout := "2006-01-02"
+	startDate, err := time.Parse(layout, start)
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+	endDate, err := time.Parse(layout, end)
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
+	rooms, err := rep.DB.SearchAvailabilityForAllRooms(startDate, endDate)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	if len(rooms) == 0 {
+		rep.AppConfig.Session.Put(r.Context(), "error", "No availability")
+		http.Redirect(w, r, "/search-availability", http.StatusSeeOther)
+		return
+	}
+
+	for _, room := range rooms {
+		rep.AppConfig.InfoLog.Println(room)
+	}
+
+	data := make(map[string]interface{})
+	data["rooms"] = rooms
+
+	res := models.Reservation{
+		StartDate: startDate,
+		EndDate:   endDate,
+	}
+
+	rep.AppConfig.Session.Put(r.Context(), "reservation", res)
+
+	render.Template(w, r, "choose-room", &models.TemplateData{
+		Data: data,
+	})
 }
 
 type jsonResponse struct {
@@ -164,9 +202,9 @@ func (rep *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	restriction := models.RoomRestriction{
-		StartDate: startDate,
-		EndDate: endDate,
-		RoomID: roomId,
+		StartDate:     startDate,
+		EndDate:       endDate,
+		RoomID:        roomId,
 		ReservationID: newReservationID,
 		RestrictionID: 2,
 	}
@@ -175,7 +213,7 @@ func (rep *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		helpers.ServerError(w, err)
 	}
-	
+
 	rep.AppConfig.Session.Put(r.Context(), "reservation", reservation)
 
 	http.Redirect(w, r, "/reservation-summary", http.StatusSeeOther)
@@ -209,4 +247,23 @@ func (rep *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request
 	render.Template(w, r, "reservation-summary", &models.TemplateData{
 		Data: data,
 	})
+}
+
+// ChooseRoom save room id to session and redirect to make reservation date
+func (rep *Repository) ChooseRoom(w http.ResponseWriter, r *http.Request) {
+	roomId, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	res, ok:= rep.AppConfig.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		helpers.ServerError(w, err)
+		return
+	}
+	res.RoomID = roomId
+	rep.AppConfig.Session.Put(r.Context(), "reservation", res)
+
+	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
 }
