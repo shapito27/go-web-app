@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -129,14 +130,31 @@ func (rep *Repository) PostAvailablilityJSON(w http.ResponseWriter, r *http.Requ
 
 // Reservation handles requests to reservation form
 func (rep *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
-	var emptyReservation models.Reservation
+	res, ok:= rep.AppConfig.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		helpers.ServerError(w, errors.New("can't get reservation from session"))
+		return
+	}
+
+	room, err := rep.DB.GetRoomByID(res.RoomID)
+	if err!=nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	res.Room = room
 
 	data := make(map[string]interface{})
-	data["reservation"] = emptyReservation
+	data["reservation"] = res
+
+	stringMap := make(map[string]string)
+	stringMap["start_date"] = res.StartDate.Format("2006-01-02")
+	stringMap["end_date"] = res.EndDate.Format("2006-01-02")
 
 	render.Template(w, r, "make-reservation", &models.TemplateData{
 		Form: forms.New(nil),
 		Data: data,
+		StringMap: stringMap,
 	})
 }
 

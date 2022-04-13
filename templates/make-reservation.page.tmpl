@@ -12,8 +12,19 @@ make reservation
 
             {{ $reservation := index .Data "reservation"}}
 
+            <p>
+                <b>Reservation details:</b><br> 
+                Room: {{$reservation.Room.RoomName}}<br>
+                Arrival: {{index .StringMap "start_date"}}<br>
+                Departure: {{index .StringMap "end_date"}}<br>
+            </p>
+            
             <form method="post" action="" class="" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ .CSRFToken}}">
+
+                <input type='hidden' name='start_date' value="{{index .StringMap "start_date"}}">
+                <input type='hidden' name='end_date' value="{{index .StringMap "end_date"}}">
+                <input type="hidden" name="room_id" value="{{$reservation.RoomID}}">
 
                 <div class="form-group mt-3">
                     <label for="first_name">First Name:</label>
@@ -34,28 +45,6 @@ make reservation
                         <span for="last_name" class="text-danger">{{.}}</span>
                     {{end}}
                 </div>
-
-                <div class="form-group">
-                    <label for="start_date">Start date:</label>
-                    <input class="form-control {{with .Form.Errors.Get "start_date"}} is-invalid {{end}}"
-                           id="start_date" autocomplete="off" type='text'
-                           name='start_date' value="{{$reservation.StartDate}}" required>
-                    {{with .Form.Errors.Get "start_date"}}
-                        <span for="start_date" class="text-danger">{{.}}</span>
-                    {{end}}
-                </div>
-
-                <div class="form-group">
-                    <label for="end_date">Start date:</label>
-                    <input class="form-control {{with .Form.Errors.Get "end_date"}} is-invalid {{end}}"
-                           id="end_date" autocomplete="off" type='text'
-                           name='end_date' value="{{$reservation.EndDate}}" required>
-                    {{with .Form.Errors.Get "end_date"}}
-                        <span for="end_date" class="text-danger">{{.}}</span>
-                    {{end}}
-                </div>
-
-                <input type="hidden" name="room_id" value="1">
 
                 <div class="form-group">
                     <label for="email">Email:</label>
