@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"testing"
 	"text/template"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/justinas/nosurf"
 	"github.com/shapito27/go-web-app/internal/config"
-	"github.com/shapito27/go-web-app/internal/driver"
 	"github.com/shapito27/go-web-app/internal/helpers"
 	"github.com/shapito27/go-web-app/internal/models"
 	"github.com/shapito27/go-web-app/internal/render"
@@ -28,9 +28,12 @@ var functions = template.FuncMap{}
 
 var pathToTemplate = "./../../templates"
 
-func getRoutes() http.Handler {
+func TestMain(m *testing.M) {
 	//what I'm going to store in the session
 	gob.Register(models.Reservation{})
+	gob.Register(models.User{})
+	gob.Register(models.Room{})
+	gob.Register(models.Restriction{})
 
 	// Setup environment
 	app.IsProduction = false
@@ -65,14 +68,69 @@ func getRoutes() http.Handler {
 	app.UseCache = true
 
 	// connect to database
-	dsn := "host=localhost port=5432 dbname=bookings user=postgres password=postgres"
-	db, err := driver.ConnectSQL(dsn)
+	//dsn := "host=localhost port=5432 dbname=bookings user=postgres password=postgres"
+	//db, err := driver.ConnectSQL(dsn)
 	if err != nil {
 		fmt.Println("Error when connect sql", err)
 	}
 	log.Println("Connected to database!")
 
-	repo := NewRepo(&app, db)
+	repo := NewTestingRepo(&app)
+	NewHandlers(repo)
+
+	// pass config to render package
+	render.NewRenderer(&app)
+	os.Exit(m.Run())
+}
+
+func getRoutes() http.Handler {
+	//what I'm going to store in the session
+	gob.Register(models.Reservation{})
+	gob.Register(models.User{})
+	gob.Register(models.Room{})
+	gob.Register(models.Restriction{})
+
+	// Setup environment
+	app.IsProduction = false
+
+	// Setup Loggers
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	app.InfoLog = infoLog
+
+	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	app.ErrorLog = errorLog
+
+	helpers.NewHelpers(&app)
+
+	// Setup session
+	session = scs.New()
+	session.Lifetime = 24 * time.Hour
+	session.Cookie.Persist = true
+	session.Cookie.SameSite = http.SameSiteLaxMode
+	session.Cookie.Secure = app.IsProduction
+
+	app.Session = session
+
+	// getting templates list
+	templates, err := GetTestTemplatesCache()
+	if err != nil {
+		fmt.Println("Error getting templates cache", err)
+	}
+
+	// save templates to config
+	app.TemplatesCache = templates
+	// false - development mode, true - production
+	app.UseCache = true
+
+	// connect to database
+	//dsn := "host=localhost port=5432 dbname=bookings user=postgres password=postgres"
+	//db, err := driver.ConnectSQL(dsn)
+	if err != nil {
+		fmt.Println("Error when connect sql", err)
+	}
+	log.Println("Connected to database!")
+
+	repo := NewTestingRepo(&app)
 	NewHandlers(repo)
 
 	// pass config to render package

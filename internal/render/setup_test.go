@@ -20,6 +20,9 @@ var app config.AppConfig
 func TestMain(m *testing.M) {
 	//what I'm going to store in the session
 	gob.Register(models.Reservation{})
+	gob.Register(models.User{})
+	gob.Register(models.Room{})
+	gob.Register(models.Restriction{})
 
 	// Setup environment
 	app.IsProduction = false
