@@ -2,6 +2,7 @@ package dbrepo
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/shapito27/go-web-app/internal/config"
@@ -44,5 +45,8 @@ func (pr *testDBRepo) SearchAvailabilityForAllRooms(start, end time.Time) ([]mod
 // GetRoomByID returns room model by id
 func (pr *testDBRepo) GetRoomByID(roomID int) (models.Room, error) {
 	var room models.Room
+	if roomID > 2 {
+		return room, errors.New("Room not found")
+	}
 	return room, nil
 }
