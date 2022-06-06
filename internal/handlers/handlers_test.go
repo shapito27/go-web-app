@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/shapito27/go-web-app/internal/models"
@@ -102,6 +103,235 @@ func TestRepository_Reservation(t *testing.T) {
 		t.Errorf("Handler Reservation returned wrong response code: got %d, expected %d", rr.Code, http.StatusTemporaryRedirect)
 	}
 
+}
+
+// TestRepository_PostReservation
+func TestRepository_PostReservation(t *testing.T) {
+	reservation := models.Reservation{
+		RoomID: 1,
+		Room: models.Room{
+			ID:       1,
+			RoomName: "Red room",
+		},
+	}
+
+	strBody := "first_name=Rusaln&last_name=Jora&email=ll@ll.ru&phone=88005553535&start_date=2023-01-01&end_date=2024-01-01"
+	body := strings.NewReader(strBody)
+
+	req, _ := http.NewRequest("POST", "/make-reservation", body)
+	ctx := getContext(req)
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	rr := httptest.NewRecorder()
+	session.Put(ctx, "reservation", reservation)
+
+	handler := http.HandlerFunc(Repo.PostReservation)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("Handler PostReservation returned wrong response code: got %d, expected %d", rr.Code, http.StatusSeeOther)
+	}
+
+	// case when wrong body
+	req, _ = http.NewRequest("POST", "/make-reservation", nil)
+	ctx = getContext(req)
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+	session.Put(ctx, "reservation", reservation)
+
+	handler = http.HandlerFunc(Repo.PostReservation)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("Handler PostReservation returned wrong response code: got %d, expected %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+
+	// case when no session
+	strBody = "first_name=Rusaln&last_name=Jora&email=ll@ll.ru&phone=88005553535&start_date=2023-01-01&end_date=2024-01-01"
+	body = strings.NewReader(strBody)
+
+	req, _ = http.NewRequest("POST", "/make-reservation", body)
+	ctx = getContext(req)
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+
+	handler = http.HandlerFunc(Repo.PostReservation)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("Handler PostReservation returned wrong response code when no session: got %d, expected %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+
+	// case when not valid data
+	strBody = "first_name=R&last_name=Jora&email=ll@ll.ru&phone=88005553535&start_date=2023-01-01&end_date=2024-01-01"
+	body = strings.NewReader(strBody)
+
+	req, _ = http.NewRequest("POST", "/make-reservation", body)
+	ctx = getContext(req)
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+	session.Put(ctx, "reservation", reservation)
+
+	handler = http.HandlerFunc(Repo.PostReservation)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("Handler PostReservation returned wrong response code when invalid name: got %d, expected %d", rr.Code, http.StatusSeeOther)
+	}
+
+	// case when insert reservation fails
+	strBody = "first_name=Ruslan&last_name=Jora&email=ll@ll.ru&phone=88005553535&start_date=2023-01-01&end_date=2024-01-01"
+	body = strings.NewReader(strBody)
+
+	req, _ = http.NewRequest("POST", "/make-reservation", body)
+	ctx = getContext(req)
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+	reservation.RoomID = 2
+	session.Put(ctx, "reservation", reservation)
+
+	handler = http.HandlerFunc(Repo.PostReservation)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("Handler PostReservation returned wrong response code when insert reservation fails: got %d, expected %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+
+	// case when insert RoomRestriction fails
+	strBody = "first_name=Ruslan&last_name=Jora&email=ll@ll.ru&phone=88005553535&start_date=2023-01-01&end_date=2024-01-01"
+	body = strings.NewReader(strBody)
+
+	req, _ = http.NewRequest("POST", "/make-reservation", body)
+	ctx = getContext(req)
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+	reservation.RoomID = 3
+	session.Put(ctx, "reservation", reservation)
+
+	handler = http.HandlerFunc(Repo.PostReservation)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("Handler PostReservation returned wrong response code when insert RoomRestriction fails: got %d, expected %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+}
+
+// TestRepository_PostAvailablility
+func TestRepository_PostAvailablility(t *testing.T) {
+	strBody := "start=2022-06-27&end=2022-06-30"
+	body := strings.NewReader(strBody)
+
+	req, _ := http.NewRequest("POST", "/search-availability", body)
+	ctx := getContext(req)
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(Repo.PostAvailablility)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("Handler PostAvailablility returned wrong response code: got %d, expected %d", rr.Code, http.StatusOK)
+	}
+
+	// cace trying fail SearchAvailabilityForAllRooms
+	strBody = "start=2022-06-26&end=2022-06-29"
+	body = strings.NewReader(strBody)
+
+	req, _ = http.NewRequest("POST", "/search-availability", body)
+	ctx = getContext(req)
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+
+	handler = http.HandlerFunc(Repo.PostAvailablility)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("Handler PostAvailablility returned wrong response code: got %d, expected %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+
+	// case when no post body
+	req, _ = http.NewRequest("POST", "/search-availability", nil)
+	ctx = getContext(req)
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+
+	handler = http.HandlerFunc(Repo.PostAvailablility)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("Handler PostAvailablility returned wrong response code: got %d, expected %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+
+	// case when no start date
+	strBody = "end=2022-06-22"
+	body = strings.NewReader(strBody)
+
+	req, _ = http.NewRequest("POST", "/search-availability", body)
+	ctx = getContext(req)
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+
+	handler = http.HandlerFunc(Repo.PostAvailablility)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("Handler PostAvailablility returned wrong response code when start empty: got %d, expected %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+
+	// case when no end date
+	strBody = "start=2022-06-22"
+	body = strings.NewReader(strBody)
+
+	req, _ = http.NewRequest("POST", "/search-availability", body)
+	ctx = getContext(req)
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+
+	handler = http.HandlerFunc(Repo.PostAvailablility)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("Handler PostAvailablility returned wrong response code when end empty: got %d, expected %d", rr.Code, http.StatusTemporaryRedirect)
+	}
+
+	// case when no rooms for dates
+	strBody = "start=2022-06-21&end=2022-06-22"
+	body = strings.NewReader(strBody)
+
+	req, _ = http.NewRequest("POST", "/search-availability", body)
+	ctx = getContext(req)
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	rr = httptest.NewRecorder()
+
+	handler = http.HandlerFunc(Repo.PostAvailablility)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("Handler PostAvailablility returned wrong response code when no rooms for dates: got %d, expected %d", rr.Code, http.StatusSeeOther)
+	}
 }
 
 // getContext return context by request

@@ -38,7 +38,7 @@ func main() {
 		Handler: routes(&app),
 	}
 
-	fmt.Println(fmt.Sprintf("Starting application on port %s", portNumber))
+	fmt.Printf("Starting application on http://localhost%s", portNumber)
 
 	err = srv.ListenAndServe()
 	log.Fatal(err)
