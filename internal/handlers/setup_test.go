@@ -35,6 +35,9 @@ func TestMain(m *testing.M) {
 	gob.Register(models.Room{})
 	gob.Register(models.Restriction{})
 
+	mailChan := make(chan models.MailData)
+	app.MailChan = mailChan
+
 	// Setup environment
 	app.IsProduction = false
 
@@ -55,6 +58,9 @@ func TestMain(m *testing.M) {
 	session.Cookie.Secure = app.IsProduction
 
 	app.Session = session
+
+	defer close(app.MailChan)
+	listenForMail()
 
 	// getting templates list
 	templates, err := GetTestTemplatesCache()
@@ -219,4 +225,12 @@ func GetTestTemplatesCache() (map[string]*template.Template, error) {
 	}
 
 	return myCache, nil
+}
+
+func listenForMail() {
+	go func() {
+		for {
+			<-app.MailChan
+		}
+	}()
 }
